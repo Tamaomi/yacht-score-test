@@ -1,0 +1,54 @@
+:root {
+  --bg: #f5f0df;
+  --ink: #222;
+  --line: #333;
+  --dark: #353535;
+  --cell: #fffdf2;
+  --input: #ffd94f;
+  --accent: #00a6c8;
+  --danger: #b32b2b;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: #1f1f1f; color: var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+body { overscroll-behavior: none; }
+button, input { font: inherit; }
+.app { max-width: 760px; min-height: 100dvh; margin: 0 auto; padding: 10px; background: linear-gradient(90deg, #9b6b35 0 8px, var(--bg) 8px calc(100% - 8px), #9b6b35 calc(100% - 8px)); }
+.topbar { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 10px; border: 3px solid var(--line); background: #faf7eb; }
+h1 { margin: 0; font-size: 22px; line-height: 1.1; }
+#turnText { margin: 4px 0 0; font-size: 22px; color: #666; }
+.actions { display: grid; gap: 6px; grid-template-columns: 1fr; min-width: 110px; }
+button { min-height: 42px; border: 2px solid var(--line); border-radius: 8px; background: #fff; font-weight: 700; }
+button:active { transform: translateY(1px); }
+.danger { color: #fff; background: var(--danger); }
+.sheetWrap { margin-top: 8px; overflow-x: auto; border: 3px solid var(--line); background: #fff; }
+.scoreTable { width: 100%; min-width: 520px; border-collapse: collapse; table-layout: fixed; }
+.scoreTable th, .scoreTable td { border: 2px solid var(--line); height: 46px; text-align: center; }
+.scoreTable th.roleHead, .scoreTable td.role { position: sticky; left: 0; z-index: 2; width: 170px; text-align: left; padding-left: 10px; background: var(--cell); font-weight: 800; }
+.scoreTable th.roleHead, .scoreTable .summaryLabel { background: var(--dark); color: #fff; }
+.playerHead { padding: 4px; font-size: 13px; }
+.playerBadge { width: 38px; height: 38px; border-radius: 50%; margin: 0 auto 3px; border: 3px solid rgba(0,0,0,.25); display: grid; place-items: center; font-weight: 900; }
+.scoreInput { width: 100%; height: 44px; border: 0; background: var(--input); text-align: center; font-size: 28px; font-weight: 700; color: #4f4300; outline: none; }
+.scoreInput:focus { box-shadow: inset 0 0 0 4px var(--accent); background: #ffad34; }
+.scoreInput.used { color: #111; }
+.summaryCell { background: #9d9d9d; color: #fff; font-size: 20px; font-weight: 900; }
+.totalCell { background: var(--input); color: #111; font-size: 30px; font-weight: 900; }
+.roleIcon { display: inline-block; min-width: 28px; margin-right: 4px; font-size: 18px; letter-spacing: -3px; color: #000; }
+.rules { margin: 8px 0 0; padding: 10px; border: 3px solid var(--line); background: #fffdf2; }
+.rules h2 { margin: 0 0 6px; font-size: 18px; }
+.rules p { margin: 6px 0; line-height: 1.45; }
+.dialog { width: min(92vw, 520px); border: 3px solid var(--line); border-radius: 12px; background: #fffdf2; }
+.dialog::backdrop { background: rgba(0,0,0,.45); }
+.dialog h2 { margin-top: 0; }
+.settingBlock { margin: 12px 0; }
+.settingBlock ul { padding-left: 20px; line-height: 1.55; }
+@media (max-width: 520px) {
+  .app { padding: 6px; }
+  .topbar { align-items: stretch; flex-direction: column; }
+  .actions { grid-template-columns: repeat(3, 1fr); min-width: 0; }
+  h1 { font-size: 20px; }
+  #turnText { font-size: 20px; }
+  button { min-height: 46px; font-size: 14px; }
+  .scoreTable { min-width: 470px; }
+  .scoreTable th.roleHead, .scoreTable td.role { width: 150px; }
+  .scoreInput { font-size: 26px; }
+}
