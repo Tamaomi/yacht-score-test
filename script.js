@@ -6,12 +6,13 @@ const ROLES = [
   { id: 'fours', name: 'フォー', mark: '⚃', section: 'upper' },
   { id: 'fives', name: 'ファイブ', mark: '⚄', section: 'upper' },
   { id: 'sixes', name: 'シックス', mark: '⚅', section: 'upper' },
-  { id: 'choice', name: 'チョイス', mark: '▦', section: 'lower' },
-  { id: 'fourcard', name: 'フォーカード', mark: '▦', section: 'lower' },
-  { id: 'fullhouse', name: 'フルハウス', mark: '▤', section: 'lower' },
-  { id: 'smallstraight', name: 'S.ストレート', mark: '▱', section: 'lower' },
-  { id: 'bigstraight', name: 'B.ストレート', mark: '▱', section: 'lower' },
-  { id: 'yacht', name: 'ヨット', mark: '▥', section: 'lower' }
+  // 修正内容：下段役のアイコンを添付デザインに近いドット配置へ変更
+  { id: 'choice', name: 'チョイス', markClass: 'choice-icon', section: 'lower' },
+  { id: 'fourcard', name: 'フォーダイス', markClass: 'fourdice-icon', section: 'lower' },
+  { id: 'fullhouse', name: 'フルハウス', markClass: 'fullhouse-icon', section: 'lower' },
+  { id: 'smallstraight', name: 'S.ストレート', markClass: 'smallstraight-icon', section: 'lower' },
+  { id: 'bigstraight', name: 'B.ストレート', markClass: 'bigstraight-icon', section: 'lower' },
+  { id: 'yacht', name: 'ヨット', markClass: 'yacht-icon', section: 'lower' }
 ];
 
 const state = {
@@ -71,6 +72,12 @@ function createCell(className, html) {
   return cell;
 }
 
+// 修正内容：役アイコンをCSSで描画できるようにHTMLを分岐
+function roleIconHtml(role) {
+  if (role.markClass) return `<span class="dice lower-dice ${role.markClass}" aria-hidden="true"></span>`;
+  return `<span class="dice" aria-hidden="true">${role.mark}</span>`;
+}
+
 function renderNames() {
   nameRow.innerHTML = '';
 }
@@ -91,7 +98,7 @@ function renderBoard() {
   }
 
   ROLES.forEach((role, roleIndex) => {
-    grid.appendChild(createCell('role', `<span class="dice">${role.mark}</span><span>${role.name}</span>`));
+    grid.appendChild(createCell('role', `${roleIconHtml(role)}<span class="role-name">${role.name}</span>`));
     for (let p = 0; p < state.playerCount; p++) {
       const score = state.scores[p][role.id];
       const scoreCell = createCell('score', '');
