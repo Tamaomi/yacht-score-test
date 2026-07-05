@@ -1,267 +1,264 @@
-'use strict';
-
-const MAX_PLAYERS = 8;
-const MIN_PLAYERS = 2;
-const PLAYER_COLORS = ['#ffe98a', '#d9eefb', '#ffc6cf', '#cfeecb', '#e6d7ff', '#ffd8a8', '#ccefe8', '#eeeeee'];
-const AVATARS = ['👩', '👨‍💼', '👩‍🦰', '👨', '🧑', '👩‍💼', '🧔', '🙂'];
-
-const roles = [
-  { key: 'aces', name: 'エース', short: '⚀', section: 'upper' },
-  { key: 'twos', name: 'デュース', short: '⚁', section: 'upper' },
-  { key: 'threes', name: 'トレイ', short: '⚂', section: 'upper' },
-  { key: 'fours', name: 'フォー', short: '⚃', section: 'upper' },
-  { key: 'fives', name: 'ファイブ', short: '⚄', section: 'upper' },
-  { key: 'sixes', name: 'シックス', short: '⚅', section: 'upper' },
-  { key: 'choice', name: 'チョイス', short: '✣', section: 'lower' },
-  { key: 'fourDice', name: 'フォーダイス', short: '⚄', section: 'lower' },
-  { key: 'fullHouse', name: 'フルハウス', short: '▦', section: 'lower' },
-  { key: 'smallStraight', name: 'S.ストレート', short: '⚂', section: 'lower' },
-  { key: 'bigStraight', name: 'B.ストレート', short: '⚃', section: 'lower' },
-  { key: 'yacht', name: 'ヨット', short: '⚅', section: 'lower' }
+const PLAYER_COLORS = ['#1268d8', '#ef4775', '#2db455', '#ff9024'];
+const ROLES = [
+  { id: 'aces', name: 'エース', mark: '⚀', section: 'upper' },
+  { id: 'twos', name: 'デュース', mark: '⚁', section: 'upper' },
+  { id: 'threes', name: 'トレイ', mark: '⚂', section: 'upper' },
+  { id: 'fours', name: 'フォー', mark: '⚃', section: 'upper' },
+  { id: 'fives', name: 'ファイブ', mark: '⚄', section: 'upper' },
+  { id: 'sixes', name: 'シックス', mark: '⚅', section: 'upper' },
+  { id: 'choice', name: 'チョイス', mark: '▦', section: 'lower' },
+  { id: 'fourcard', name: 'フォーカード', mark: '▦', section: 'lower' },
+  { id: 'fullhouse', name: 'フルハウス', mark: '▤', section: 'lower' },
+  { id: 'smallstraight', name: 'S.ストレート', mark: '▱', section: 'lower' },
+  { id: 'bigstraight', name: 'B.ストレート', mark: '▱', section: 'lower' },
+  { id: 'yacht', name: 'ヨット', mark: '▥', section: 'lower' }
 ];
 
-const scoreLimits = {
-  aces: 5, twos: 10, threes: 15, fours: 20, fives: 25, sixes: 30,
-  choice: 30, fourDice: 30, fullHouse: 25, smallStraight: 15, bigStraight: 30, yacht: 50
+const state = {
+  playerCount: 2,
+  playerNames: ['P1', 'P2', 'P3', 'P4'],
+  scores: {},
+  currentRole: 0,
+  currentPlayer: 0
 };
 
-let state = createInitialState();
+const scoreBoard = document.getElementById('scoreBoard');
+const nameRow = document.getElementById('nameRow');
+const turnTitle = document.getElementById('turnTitle');
+const inputStatus = document.getElementById('inputStatus');
+const modeTabs = document.getElementById('modeTabs');
+const scoreDialog = document.getElementById('scoreDialog');
+const scoreDialogTitle = document.getElementById('scoreDialogTitle');
+const scoreInput = document.getElementById('scoreInput');
+const scoreError = document.getElementById('scoreError');
+const settingsDialog = document.getElementById('settingsDialog');
+const settingsNames = document.getElementById('settingsNames');
+let editing = null;
 
-const el = {
-  screenTitle: document.getElementById('screenTitle'),
-  mainScreen: document.getElementById('mainScreen'),
-  listScreen: document.getElementById('listScreen'),
-  backButton: document.getElementById('backButton'),
-  settingsButton: document.getElementById('settingsButton'),
-  turnNow: document.getElementById('turnNow'),
-  playerCardA: document.getElementById('playerCardA'),
-  playerCardB: document.getElementById('playerCardB'),
-  upperTable: document.getElementById('upperTable'),
-  lowerTable: document.getElementById('lowerTable'),
-  totalRow: document.getElementById('totalRow'),
-  prevPlayerButton: document.getElementById('prevPlayerButton'),
-  nextPlayerButton: document.getElementById('nextPlayerButton'),
-  addPlayerButton: document.getElementById('addPlayerButton'),
-  listButton: document.getElementById('listButton'),
-  resetButton: document.getElementById('resetButton'),
-  allScoreTable: document.getElementById('allScoreTable'),
-  homeButton: document.getElementById('homeButton'),
-  settingsDialog: document.getElementById('settingsDialog'),
-  settingsPlayerList: document.getElementById('settingsPlayerList'),
-  saveSettingsButton: document.getElementById('saveSettingsButton')
-};
-
-function createInitialState() {
-  return {
-    turn: 1,
-    currentPlayer: 0,
-    players: Array.from({ length: 4 }, (_, index) => createPlayer(index))
-  };
+function initScores() {
+  state.scores = {};
+  for (let p = 0; p < 4; p++) {
+    state.scores[p] = {};
+    ROLES.forEach(role => state.scores[p][role.id] = null);
+  }
 }
 
-function createPlayer(index) {
-  return {
-    name: `プレイヤー${index + 1}`,
-    color: PLAYER_COLORS[index % PLAYER_COLORS.length],
-    avatar: AVATARS[index % AVATARS.length],
-    scores: Object.fromEntries(roles.map(role => [role.key, '']))
-  };
+function getTurn() {
+  return Math.min(state.currentRole + 1, ROLES.length);
 }
 
-function clampNumber(value, min, max) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return '';
-  return String(Math.max(min, Math.min(max, Math.floor(number))));
+function valueOf(score) {
+  const value = Number(score);
+  return Number.isFinite(value) ? value : 0;
 }
 
-function getVisiblePlayerIndexes() {
-  const first = state.currentPlayer % 2 === 0 ? state.currentPlayer : state.currentPlayer - 1;
-  return [first, first + 1].filter(index => index < state.players.length);
+function upperSubtotal(playerIndex) {
+  return ROLES.filter(r => r.section === 'upper').reduce((sum, role) => sum + valueOf(state.scores[playerIndex][role.id]), 0);
 }
 
-function calculatePlayer(player) {
-  const upper = roles.filter(r => r.section === 'upper').reduce((sum, role) => sum + Number(player.scores[role.key] || 0), 0);
-  const bonus = upper >= 63 ? 35 : 0;
-  const lower = roles.filter(r => r.section === 'lower').reduce((sum, role) => sum + Number(player.scores[role.key] || 0), 0);
-  return { upper, bonus, lower, total: upper + bonus + lower };
+function lowerSubtotal(playerIndex) {
+  return ROLES.filter(r => r.section === 'lower').reduce((sum, role) => sum + valueOf(state.scores[playerIndex][role.id]), 0);
 }
 
-function render() {
-  el.turnNow.textContent = state.turn;
-  renderPlayerCards();
-  renderScoreTables();
-  renderAllScoreTable();
+function bonus(playerIndex) {
+  return upperSubtotal(playerIndex) >= 63 ? 35 : 0;
 }
 
-function renderPlayerCards() {
-  const visible = getVisiblePlayerIndexes();
-  [el.playerCardA, el.playerCardB].forEach((card, position) => {
-    const playerIndex = visible[position];
-    if (playerIndex === undefined) {
-      card.innerHTML = '';
-      card.style.background = '#fff';
-      return;
+function total(playerIndex) {
+  return upperSubtotal(playerIndex) + lowerSubtotal(playerIndex) + bonus(playerIndex);
+}
+
+function createCell(className, html) {
+  const cell = document.createElement('div');
+  cell.className = `cell ${className}`;
+  cell.innerHTML = html;
+  return cell;
+}
+
+function renderNames() {
+  nameRow.className = `name-row count-${state.playerCount}`;
+  nameRow.innerHTML = '';
+  for (let p = 0; p < state.playerCount; p++) {
+    const name = document.createElement('div');
+    name.className = 'player-name';
+    name.style.background = `linear-gradient(180deg, ${PLAYER_COLORS[p]}, ${PLAYER_COLORS[p]}dd)`;
+    name.textContent = state.playerNames[p];
+    nameRow.appendChild(name);
+  }
+}
+
+function renderBoard() {
+  turnTitle.textContent = `ターン ${getTurn()} / 12`;
+  inputStatus.textContent = `${ROLES[state.currentRole].name}を入力中`;
+  renderNames();
+
+  const grid = document.createElement('div');
+  grid.className = `score-grid count-${state.playerCount}`;
+  grid.appendChild(createCell('role header-role', '役名'));
+  for (let p = 0; p < state.playerCount; p++) grid.appendChild(createCell('header', ''));
+
+  ROLES.forEach((role, roleIndex) => {
+    grid.appendChild(createCell('role', `<span class="dice">${role.mark}</span><span>${role.name}</span>`));
+    for (let p = 0; p < state.playerCount; p++) {
+      const score = state.scores[p][role.id];
+      const scoreCell = createCell('score', score === null ? '' : String(score));
+      if (p === state.currentPlayer) scoreCell.classList.add('current-player');
+      if (roleIndex === state.currentRole && p === state.currentPlayer) scoreCell.classList.add('active');
+      if (score !== null && roleIndex < state.currentRole) scoreCell.classList.add('filled-near');
+      scoreCell.dataset.player = p;
+      scoreCell.dataset.role = roleIndex;
+      scoreCell.addEventListener('click', openScoreDialog);
+      grid.appendChild(scoreCell);
     }
-    const player = state.players[playerIndex];
-    card.style.background = playerIndex === state.currentPlayer ? player.color : '#fff';
-    card.innerHTML = `
-      <div>
-        <span class="player-label">プレイヤー</span>
-        <div class="player-count">${playerIndex + 1} / ${state.players.length}</div>
-        <span class="player-name-chip" style="background:${player.color}">${escapeHtml(player.name)}</span>
-      </div>
-      <div class="avatar" style="background:${player.color}">${player.avatar}</div>
-    `;
+
+    if (role.id === 'sixes') {
+      grid.appendChild(createCell('role', '小計'));
+      for (let p = 0; p < state.playerCount; p++) grid.appendChild(createCell('summary', `<strong>${upperSubtotal(p)}</strong> / 63`));
+      grid.appendChild(createCell('role', 'ボーナス +35'));
+      for (let p = 0; p < state.playerCount; p++) grid.appendChild(createCell('summary', String(bonus(p))));
+    }
   });
+
+  grid.appendChild(createCell('role total-label', '総合得点'));
+  for (let p = 0; p < state.playerCount; p++) grid.appendChild(createCell('total', String(total(p))));
+
+  scoreBoard.innerHTML = '';
+  scoreBoard.appendChild(grid);
 }
 
-function renderScoreTables() {
-  const visible = getVisiblePlayerIndexes();
-  el.upperTable.innerHTML = roles.filter(r => r.section === 'upper').map(role => createScoreRow(role, visible)).join('') + createSummaryRow('小計', visible, 'upper') + createSummaryRow('ボーナス（+35）', visible, 'bonus');
-  el.lowerTable.innerHTML = roles.filter(r => r.section === 'lower').map(role => createScoreRow(role, visible)).join('');
-  el.totalRow.innerHTML = `<div>総合得点</div>${visible.map(index => `<div class="total-score">${calculatePlayer(state.players[index]).total}</div>`).join('')}`;
-
-  document.querySelectorAll('.score-cell').forEach(input => {
-    input.addEventListener('input', onScoreInput);
-    input.addEventListener('focus', event => event.target.classList.add('focused-cell'));
-    input.addEventListener('blur', event => event.target.classList.remove('focused-cell'));
-  });
+function openScoreDialog(event) {
+  const player = Number(event.currentTarget.dataset.player);
+  const roleIndex = Number(event.currentTarget.dataset.role);
+  editing = { player, roleIndex };
+  const role = ROLES[roleIndex];
+  const currentValue = state.scores[player][role.id];
+  scoreDialogTitle.textContent = `${state.playerNames[player]}：${role.name}`;
+  scoreInput.value = currentValue === null ? '' : currentValue;
+  scoreError.textContent = '';
+  scoreDialog.showModal();
+  setTimeout(() => scoreInput.focus(), 50);
 }
 
-function createScoreRow(role, visible) {
-  return `<div class="score-row">
-    <div class="role-name"><span class="dice">${role.short}</span><span>${role.name}</span></div>
-    ${visible.map(index => {
-      const player = state.players[index];
-      const isActive = index === state.currentPlayer ? 'active-player-cell' : '';
-      return `<div class="${isActive}"><input class="score-cell" inputmode="numeric" pattern="[0-9]*" data-player="${index}" data-role="${role.key}" value="${player.scores[role.key]}" aria-label="${player.name} ${role.name}"></div>`;
-    }).join('')}
-  </div>`;
-}
-
-function createSummaryRow(label, visible, type) {
-  return `<div class="score-row">
-    <div class="summary-label">${label}</div>
-    ${visible.map(index => {
-      const calc = calculatePlayer(state.players[index]);
-      const value = type === 'upper' ? `${calc.upper} / 63` : calc.bonus;
-      return `<div class="summary-cell">${value}</div>`;
-    }).join('')}
-  </div>`;
-}
-
-function onScoreInput(event) {
-  const input = event.target;
-  const playerIndex = Number(input.dataset.player);
-  const roleKey = input.dataset.role;
-  const cleanValue = clampNumber(input.value.replace(/[^0-9]/g, ''), 0, scoreLimits[roleKey]);
-  input.value = cleanValue;
-  state.players[playerIndex].scores[roleKey] = cleanValue;
-  render();
-  const nextInput = document.querySelector(`[data-player="${playerIndex}"][data-role="${roleKey}"]`);
-  if (nextInput) {
-    nextInput.focus();
-    nextInput.classList.add('focused-cell');
-    const length = nextInput.value.length;
-    nextInput.setSelectionRange(length, length);
-  }
-}
-
-function renderAllScoreTable() {
-  el.allScoreTable.style.setProperty('--player-count', state.players.length);
-  const header = `<div class="all-row all-head"><div>役</div>${state.players.map(player => `<div style="background:${player.color}"><div><div>${escapeHtml(player.name)}</div><div class="avatar">${player.avatar}</div></div></div>`).join('')}</div>`;
-  const roleRows = roles.map(role => `<div class="all-row"><div class="dice">${role.short}</div>${state.players.map(player => `<div>${player.scores[role.key] || 0}</div>`).join('')}</div>`).join('');
-  const upperRow = `<div class="all-row"><div>小計</div>${state.players.map(player => `<div>${calculatePlayer(player).upper}</div>`).join('')}</div>`;
-  const bonusRow = `<div class="all-row"><div>ボーナス</div>${state.players.map(player => `<div>${calculatePlayer(player).bonus}</div>`).join('')}</div>`;
-  const lowerRow = `<div class="all-row"><div>下段小計</div>${state.players.map(player => `<div>${calculatePlayer(player).lower}</div>`).join('')}</div>`;
-  const totalRow = `<div class="all-row"><div>総合得点</div>${state.players.map(player => `<div class="all-total">${calculatePlayer(player).total}</div>`).join('')}</div>`;
-  el.allScoreTable.innerHTML = header + roleRows + upperRow + bonusRow + lowerRow + totalRow;
-}
-
-function showScreen(screenName) {
-  const isList = screenName === 'list';
-  el.mainScreen.classList.toggle('active', !isList);
-  el.listScreen.classList.toggle('active', isList);
-  el.backButton.classList.toggle('hidden', !isList);
-  el.settingsButton.classList.toggle('hidden', isList);
-  el.screenTitle.textContent = isList ? '全員のスコア一覧' : '🎲 ヨット点数表';
-  window.scrollTo({ top: 0, behavior: 'instant' });
-}
-
-function movePlayer(direction) {
-  state.currentPlayer += direction;
-  if (state.currentPlayer < 0) state.currentPlayer = state.players.length - 1;
-  if (state.currentPlayer >= state.players.length) {
-    state.currentPlayer = 0;
-    state.turn = Math.min(12, state.turn + 1);
-  }
-  render();
-}
-
-function addPlayer() {
-  if (state.players.length >= MAX_PLAYERS) {
-    alert('人数は最大8人までです。');
+function saveScore() {
+  if (!editing) return;
+  const raw = scoreInput.value.trim();
+  if (raw === '') {
+    scoreError.textContent = '0以上の数字を入力してください。';
     return;
   }
-  state.players.push(createPlayer(state.players.length));
-  render();
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0 || value > 999) {
+    scoreError.textContent = '0〜999の整数で入力してください。';
+    return;
+  }
+  const role = ROLES[editing.roleIndex];
+  state.scores[editing.player][role.id] = value;
+  state.currentPlayer = editing.player;
+  state.currentRole = editing.roleIndex;
+  moveNext();
+  scoreDialog.close();
+  renderBoard();
 }
 
-function resetGame() {
-  if (!confirm('全員の点数をリセットします。よろしいですか？')) return;
-  const count = state.players.length;
-  state = createInitialState();
-  while (state.players.length < count) state.players.push(createPlayer(state.players.length));
-  render();
-  showScreen('main');
+function clearScore() {
+  if (!editing) return;
+  const role = ROLES[editing.roleIndex];
+  state.scores[editing.player][role.id] = null;
+  scoreDialog.close();
+  renderBoard();
+}
+
+function moveNext() {
+  if (state.currentPlayer < state.playerCount - 1) {
+    state.currentPlayer += 1;
+    return;
+  }
+  if (state.currentRole < ROLES.length - 1) {
+    state.currentPlayer = 0;
+    state.currentRole += 1;
+  }
+}
+
+function movePrevRole() {
+  if (state.currentRole > 0) {
+    state.currentRole -= 1;
+    state.currentPlayer = 0;
+  }
+  renderBoard();
+}
+
+function moveNextRole() {
+  if (state.currentRole < ROLES.length - 1) {
+    state.currentRole += 1;
+    state.currentPlayer = 0;
+  }
+  renderBoard();
+}
+
+function setPlayerCount(count) {
+  if (![2,3,4].includes(count)) return;
+  state.playerCount = count;
+  state.currentPlayer = Math.min(state.currentPlayer, count - 1);
+  document.querySelectorAll('#modeTabs button').forEach(button => {
+    button.classList.toggle('active', Number(button.dataset.count) === count);
+  });
+  renderBoard();
 }
 
 function openSettings() {
-  el.settingsPlayerList.innerHTML = state.players.map((player, index) => `
-    <div class="setting-player">
-      <label>名前${index + 1}<input type="text" maxlength="12" data-setting-name="${index}" value="${escapeHtml(player.name)}"></label>
-      <label>色<input type="color" data-setting-color="${index}" value="${toHexColor(player.color)}"></label>
-    </div>
-  `).join('');
-  el.settingsDialog.showModal();
+  settingsNames.innerHTML = '';
+  for (let p = 0; p < state.playerCount; p++) {
+    const row = document.createElement('div');
+    row.className = 'setting-row';
+    row.innerHTML = `<label for="name${p}">プレイヤー${p + 1}</label><input id="name${p}" maxlength="8" value="${state.playerNames[p].replaceAll('"', '&quot;')}">`;
+    settingsNames.appendChild(row);
+  }
+  settingsDialog.showModal();
 }
 
 function saveSettings() {
-  document.querySelectorAll('[data-setting-name]').forEach(input => {
-    const index = Number(input.dataset.settingName);
-    state.players[index].name = input.value.trim() || `プレイヤー${index + 1}`;
-  });
-  document.querySelectorAll('[data-setting-color]').forEach(input => {
-    const index = Number(input.dataset.settingColor);
-    state.players[index].color = input.value;
-  });
-  el.settingsDialog.close();
-  render();
+  for (let p = 0; p < state.playerCount; p++) {
+    const input = document.getElementById(`name${p}`);
+    const name = input.value.trim();
+    state.playerNames[p] = name || `P${p + 1}`;
+  }
+  settingsDialog.close();
+  renderBoard();
 }
 
-function toHexColor(color) {
-  return /^#[0-9a-f]{6}$/i.test(color) ? color : '#eeeeee';
-}
-
-function escapeHtml(text) {
-  return String(text).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+function resetGame() {
+  if (!confirm('すべての点数をリセットします。よろしいですか？')) return;
+  initScores();
+  state.currentRole = 0;
+  state.currentPlayer = 0;
+  settingsDialog.close();
+  renderBoard();
 }
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+    window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
   }
 }
 
-el.prevPlayerButton.addEventListener('click', () => movePlayer(-1));
-el.nextPlayerButton.addEventListener('click', () => movePlayer(1));
-el.addPlayerButton.addEventListener('click', addPlayer);
-el.listButton.addEventListener('click', () => showScreen('list'));
-el.homeButton.addEventListener('click', () => showScreen('main'));
-el.backButton.addEventListener('click', () => showScreen('main'));
-el.resetButton.addEventListener('click', resetGame);
-el.settingsButton.addEventListener('click', openSettings);
-el.saveSettingsButton.addEventListener('click', saveSettings);
-
+initScores();
+renderBoard();
 registerServiceWorker();
-render();
+modeTabs.addEventListener('click', event => {
+  const button = event.target.closest('button[data-count]');
+  if (button) setPlayerCount(Number(button.dataset.count));
+});
+document.getElementById('menuButton').addEventListener('click', () => modeTabs.classList.toggle('open'));
+document.getElementById('settingsButton').addEventListener('click', openSettings);
+document.getElementById('saveSettingsButton').addEventListener('click', saveSettings);
+document.getElementById('resetButton').addEventListener('click', resetGame);
+document.getElementById('saveScoreButton').addEventListener('click', saveScore);
+document.getElementById('clearScoreButton').addEventListener('click', clearScore);
+document.getElementById('prevRoleButton').addEventListener('click', movePrevRole);
+document.getElementById('nextRoleButton').addEventListener('click', moveNextRole);
+scoreInput.addEventListener('keydown', event => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    saveScore();
+  }
+});

@@ -1,25 +1,15 @@
 {
   "name": "ヨット点数計算表",
   "short_name": "ヨット点数表",
-  "description": "ダイスゲーム・ヨット用のスマホ向け点数計算PWAです。",
+  "description": "ダイスゲーム・ヨット用の点数計算PWAです。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#fffdf7",
-  "theme_color": "#222222",
+  "background_color": "#c58a4a",
+  "theme_color": "#c58a4a",
+  "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
