@@ -1,5 +1,5 @@
 // 修正内容：更新後のファイルを確実に読み込むためキャッシュ名を更新
-const CACHE_NAME = 'v2-yacht-score-pwa-v3-fix1'; // 修正内容：更新版を確実に読み込むためキャッシュ名を変更
+const CACHE_NAME = 'v3-yacht-score-pwa-block-icons'; // 修正内容：黒い四角ブロックアイコン版を確実に読み込むためキャッシュ名を変更
 const FILES = [
   './',
   './index.html',
