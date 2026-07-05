@@ -46,18 +46,7 @@
     </div>
   </div>
 
-  <dialog id="scoreDialog" class="score-dialog">
-    <form method="dialog">
-      <h2 id="scoreDialogTitle">点数入力</h2>
-      <input id="scoreInput" type="number" inputmode="numeric" min="0" max="999" placeholder="0">
-      <p id="scoreError" class="error-text"></p>
-      <div class="dialog-actions">
-        <button type="submit" value="cancel" class="plain-button">キャンセル</button>
-        <button id="clearScoreButton" type="button" class="danger-button">空欄に戻す</button>
-        <button id="saveScoreButton" type="button" class="primary-button">保存</button>
-      </div>
-    </form>
-  </dialog>
+  <!-- 修正内容：スコア入力時のポップアップを廃止し、表のセルへ直接入力する方式に変更 -->
 
   <dialog id="settingsDialog" class="settings-dialog">
     <form method="dialog">

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yacht-score-pwa-v3';
+const CACHE_NAME = 'yacht-score-pwa-v3-fix1'; // 修正内容：更新版を確実に読み込むためキャッシュ名を変更
 const FILES = [
   './',
   './index.html',

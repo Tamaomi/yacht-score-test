@@ -27,13 +27,9 @@ const nameRow = document.getElementById('nameRow');
 const turnTitle = document.getElementById('turnTitle');
 const inputStatus = document.getElementById('inputStatus');
 const modeTabs = document.getElementById('modeTabs');
-const scoreDialog = document.getElementById('scoreDialog');
-const scoreDialogTitle = document.getElementById('scoreDialogTitle');
-const scoreInput = document.getElementById('scoreInput');
-const scoreError = document.getElementById('scoreError');
 const settingsDialog = document.getElementById('settingsDialog');
 const settingsNames = document.getElementById('settingsNames');
-let editing = null;
+// 修正内容：スコア入力はポップアップを使わず、表のセル内inputへ直接入力する
 
 function initScores() {
   state.scores = {};
@@ -76,16 +72,9 @@ function createCell(className, html) {
 }
 
 function renderNames() {
-  nameRow.className = `name-row count-${state.playerCount}`;
   nameRow.innerHTML = '';
-  for (let p = 0; p < state.playerCount; p++) {
-    const name = document.createElement('div');
-    name.className = 'player-name';
-    name.style.background = `linear-gradient(180deg, ${PLAYER_COLORS[p]}, ${PLAYER_COLORS[p]}dd)`;
-    name.textContent = state.playerNames[p];
-    nameRow.appendChild(name);
-  }
 }
+
 
 function renderBoard() {
   turnTitle.textContent = `ターン ${getTurn()} / 12`;
@@ -95,19 +84,35 @@ function renderBoard() {
   const grid = document.createElement('div');
   grid.className = `score-grid count-${state.playerCount}`;
   grid.appendChild(createCell('role header-role', '役名'));
-  for (let p = 0; p < state.playerCount; p++) grid.appendChild(createCell('header', ''));
+  for (let p = 0; p < state.playerCount; p++) {
+    const header = createCell('player-header', state.playerNames[p]);
+    header.style.background = `linear-gradient(180deg, ${PLAYER_COLORS[p]}, ${PLAYER_COLORS[p]}dd)`;
+    grid.appendChild(header);
+  }
 
   ROLES.forEach((role, roleIndex) => {
     grid.appendChild(createCell('role', `<span class="dice">${role.mark}</span><span>${role.name}</span>`));
     for (let p = 0; p < state.playerCount; p++) {
       const score = state.scores[p][role.id];
-      const scoreCell = createCell('score', score === null ? '' : String(score));
+      const scoreCell = createCell('score', '');
       if (p === state.currentPlayer) scoreCell.classList.add('current-player');
       if (roleIndex === state.currentRole && p === state.currentPlayer) scoreCell.classList.add('active');
       if (score !== null && roleIndex < state.currentRole) scoreCell.classList.add('filled-near');
-      scoreCell.dataset.player = p;
-      scoreCell.dataset.role = roleIndex;
-      scoreCell.addEventListener('click', openScoreDialog);
+
+      const input = document.createElement('input');
+      input.className = 'score-input';
+      input.type = 'number';
+      input.inputMode = 'numeric';
+      input.min = '0';
+      input.max = '999';
+      input.value = score === null ? '' : String(score);
+      input.dataset.player = p;
+      input.dataset.role = roleIndex;
+      input.setAttribute('aria-label', `${state.playerNames[p]} ${role.name}`);
+      input.addEventListener('focus', selectCell);
+      input.addEventListener('change', saveCellScore);
+      input.addEventListener('keydown', handleScoreKey);
+      scoreCell.appendChild(input);
       grid.appendChild(scoreCell);
     }
 
@@ -126,47 +131,52 @@ function renderBoard() {
   scoreBoard.appendChild(grid);
 }
 
-function openScoreDialog(event) {
+
+function selectCell(event) {
   const player = Number(event.currentTarget.dataset.player);
   const roleIndex = Number(event.currentTarget.dataset.role);
-  editing = { player, roleIndex };
-  const role = ROLES[roleIndex];
-  const currentValue = state.scores[player][role.id];
-  scoreDialogTitle.textContent = `${state.playerNames[player]}：${role.name}`;
-  scoreInput.value = currentValue === null ? '' : currentValue;
-  scoreError.textContent = '';
-  scoreDialog.showModal();
-  setTimeout(() => scoreInput.focus(), 50);
+  state.currentPlayer = player;
+  state.currentRole = roleIndex;
+  document.querySelectorAll('.score').forEach(cell => cell.classList.remove('active'));
+  event.currentTarget.closest('.score').classList.add('active');
+  inputStatus.textContent = `${ROLES[state.currentRole].name}を入力中`;
 }
 
-function saveScore() {
-  if (!editing) return;
-  const raw = scoreInput.value.trim();
+function saveCellScore(event) {
+  const input = event.currentTarget;
+  const player = Number(input.dataset.player);
+  const roleIndex = Number(input.dataset.role);
+  const role = ROLES[roleIndex];
+  const raw = input.value.trim();
+
+  state.currentPlayer = player;
+  state.currentRole = roleIndex;
+
   if (raw === '') {
-    scoreError.textContent = '0以上の数字を入力してください。';
+    state.scores[player][role.id] = null;
+    renderBoard();
     return;
   }
+
   const value = Number(raw);
   if (!Number.isInteger(value) || value < 0 || value > 999) {
-    scoreError.textContent = '0〜999の整数で入力してください。';
+    alert('0〜999の整数で入力してください。');
+    input.value = state.scores[player][role.id] === null ? '' : String(state.scores[player][role.id]);
     return;
   }
-  const role = ROLES[editing.roleIndex];
-  state.scores[editing.player][role.id] = value;
-  state.currentPlayer = editing.player;
-  state.currentRole = editing.roleIndex;
+
+  state.scores[player][role.id] = value;
   moveNext();
-  scoreDialog.close();
   renderBoard();
 }
 
-function clearScore() {
-  if (!editing) return;
-  const role = ROLES[editing.roleIndex];
-  state.scores[editing.player][role.id] = null;
-  scoreDialog.close();
-  renderBoard();
+function handleScoreKey(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.currentTarget.blur();
+  }
 }
+
 
 function moveNext() {
   if (state.currentPlayer < state.playerCount - 1) {
@@ -252,13 +262,5 @@ document.getElementById('menuButton').addEventListener('click', () => modeTabs.c
 document.getElementById('settingsButton').addEventListener('click', openSettings);
 document.getElementById('saveSettingsButton').addEventListener('click', saveSettings);
 document.getElementById('resetButton').addEventListener('click', resetGame);
-document.getElementById('saveScoreButton').addEventListener('click', saveScore);
-document.getElementById('clearScoreButton').addEventListener('click', clearScore);
 document.getElementById('prevRoleButton').addEventListener('click', movePrevRole);
 document.getElementById('nextRoleButton').addEventListener('click', moveNextRole);
-scoreInput.addEventListener('keydown', event => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    saveScore();
-  }
-});
