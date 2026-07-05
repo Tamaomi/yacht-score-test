@@ -1,61 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#2f2f2f">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#222222">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>ヨット点数計算表</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="icons/icon-192.png">
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div>
-        <h1>ヨット点数計算表</h1>
-        <p id="turnText">ターン 1 / 12</p>
-      </div>
-      <div class="actions">
-        <button id="addPlayerBtn" type="button">人数追加</button>
-        <button id="settingsBtn" type="button">設定</button>
-        <button id="resetBtn" type="button" class="danger">リセット</button>
-      </div>
+  <div class="app-shell">
+    <header class="app-header">
+      <button id="backButton" class="icon-button hidden" type="button" aria-label="戻る">‹</button>
+      <h1 id="screenTitle">🎲 ヨット点数表</h1>
+      <button id="settingsButton" class="icon-button" type="button" aria-label="設定">⚙</button>
     </header>
 
-    <section class="sheetWrap" aria-label="点数表">
-      <table id="scoreTable" class="scoreTable"></table>
-    </section>
+    <main>
+      <section id="mainScreen" class="screen active">
+        <div class="status-grid">
+          <div class="status-card">
+            <span>ターン</span>
+            <strong><span id="turnNow">1</span> / 12</strong>
+          </div>
+          <div id="playerCardA" class="player-card"></div>
+          <div id="playerCardB" class="player-card"></div>
+        </div>
 
-    <section class="rules">
-      <h2>簡潔ルール</h2>
-      <p>5個のサイコロを振り、各ターンで1つの役に点数を記入します。各役は1回だけ使用します。全12ターン終了時の総合得点が高い人の勝ちです。</p>
-      <p>エース〜シックスの小計が63点以上なら、ボーナス35点を加算します。</p>
-    </section>
-  </main>
+        <section class="score-board" aria-label="スコア入力表">
+          <div class="section-title">上段（ボーナス対象：63点以上で+35）</div>
+          <div id="upperTable" class="score-table"></div>
+          <div class="section-title">下段</div>
+          <div id="lowerTable" class="score-table"></div>
+          <div id="totalRow" class="total-row"></div>
+        </section>
 
-  <dialog id="settingsDialog" class="dialog">
+        <section class="rules-box">
+          <h2>簡易ルール・役の点数</h2>
+          <p>各役は1回だけ入力できます。上段はエース〜シックスの小計が63点以上でボーナス+35点です。</p>
+          <p>チョイス：出目合計 / フォーダイス：同じ目4個以上で出目合計 / フルハウス：25点 / S.ストレート：15点 / B.ストレート：30点 / ヨット：50点</p>
+        </section>
+
+        <div class="bottom-actions">
+          <button id="prevPlayerButton" class="sub-button" type="button">◀ 前のプレイヤー</button>
+          <button id="nextPlayerButton" class="primary-button" type="button">次のプレイヤー ▶</button>
+          <button id="addPlayerButton" class="green-button" type="button">👥 人数追加</button>
+          <button id="listButton" class="sub-button" type="button">☷ 全員のスコア一覧</button>
+          <button id="resetButton" class="danger-button" type="button">↻ リセット</button>
+        </div>
+      </section>
+
+      <section id="listScreen" class="screen">
+        <div class="list-scroll-wrap">
+          <div id="allScoreTable" class="all-score-table"></div>
+        </div>
+        <p class="scroll-note">左右にスライドして全員のスコアを確認できます（最大8人まで）</p>
+        <button id="homeButton" class="wide-button" type="button">🏠 メイン画面に戻る</button>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="settingsDialog" class="settings-dialog">
     <form method="dialog">
-      <h2>設定・点数計算</h2>
-      <div class="settingBlock">
-        <label>プレイヤー数</label>
-        <p id="playerCountText">2人</p>
+      <h2>設定</h2>
+      <div id="settingsPlayerList"></div>
+      <div class="dialog-actions">
+        <button value="cancel" class="sub-button" type="submit">閉じる</button>
+        <button id="saveSettingsButton" value="default" class="primary-button" type="button">保存</button>
       </div>
-      <div class="settingBlock">
-        <h3>役の点数</h3>
-        <ul>
-          <li>エース〜シックス：対象の出目だけを合計</li>
-          <li>チョイス：すべての目を合計</li>
-          <li>フォーダイス：同じ目が4つ以上で、すべての目を合計</li>
-          <li>フルハウス：同じ目3つ＋同じ目2つで25点</li>
-          <li>S.ストレート：4つ連続した目で15点</li>
-          <li>B.ストレート：5つ連続した目で30点</li>
-          <li>ヨット：5つすべて同じ目で50点</li>
-        </ul>
-      </div>
-      <button type="submit">閉じる</button>
     </form>
   </dialog>
 
