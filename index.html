@@ -37,12 +37,24 @@
           <button id="nextRoleButton" class="nav-button disabled" type="button">次の役へ ▶</button>
         </section>
 
+        <!-- 修正内容：全員の全スコア入力後にだけ表示する勝敗判定ボタン -->
+        <button id="judgeButton" class="judge-button" type="button" hidden>勝敗判定</button>
+
         <!-- 修正内容：下部の簡易ルール説明と役の点数表示を削除 -->
       </main>
     </div>
   </div>
 
   <!-- 修正内容：スコア入力時のポップアップを廃止し、表のセルへ直接入力する方式に変更 -->
+
+  <!-- 修正内容：勝敗判定結果を表示するダイアログ -->
+  <dialog id="resultDialog" class="result-dialog">
+    <div class="result-content">
+      <img src="honda.png" alt="ペットボトルを持つ人物のイラスト">
+      <p>ホンダの勝ち！！</p>
+      <button id="closeResultButton" class="primary-button" type="button">閉じる</button>
+    </div>
+  </dialog>
 
   <dialog id="settingsDialog" class="settings-dialog">
     <form method="dialog">

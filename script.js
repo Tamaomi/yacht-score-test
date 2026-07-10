@@ -30,6 +30,8 @@ const inputStatus = document.getElementById('inputStatus');
 const modeTabs = document.getElementById('modeTabs');
 const settingsDialog = document.getElementById('settingsDialog');
 const settingsNames = document.getElementById('settingsNames');
+const judgeButton = document.getElementById('judgeButton');
+const resultDialog = document.getElementById('resultDialog');
 // 修正内容：スコア入力はポップアップを使わず、表のセル内inputへ直接入力する
 
 function initScores() {
@@ -63,6 +65,16 @@ function bonus(playerIndex) {
 
 function total(playerIndex) {
   return upperSubtotal(playerIndex) + lowerSubtotal(playerIndex) + bonus(playerIndex);
+}
+
+// 修正内容：現在選択中の人数について、全プレイヤーの全役が入力済みか判定
+function isAllScoresFilled() {
+  for (let p = 0; p < state.playerCount; p++) {
+    for (const role of ROLES) {
+      if (state.scores[p][role.id] === null) return false;
+    }
+  }
+  return true;
 }
 
 function createCell(className, html) {
@@ -136,6 +148,7 @@ function renderBoard() {
 
   scoreBoard.innerHTML = '';
   scoreBoard.appendChild(grid);
+  judgeButton.hidden = !isAllScoresFilled();
 }
 
 
@@ -243,6 +256,11 @@ function saveSettings() {
   renderBoard();
 }
 
+function showResult() {
+  if (!isAllScoresFilled()) return;
+  resultDialog.showModal();
+}
+
 function resetGame() {
   if (!confirm('すべての点数をリセットします。よろしいですか？')) return;
   initScores();
@@ -271,3 +289,6 @@ document.getElementById('saveSettingsButton').addEventListener('click', saveSett
 document.getElementById('resetButton').addEventListener('click', resetGame);
 document.getElementById('prevRoleButton').addEventListener('click', movePrevRole);
 document.getElementById('nextRoleButton').addEventListener('click', moveNextRole);
+
+document.getElementById('judgeButton').addEventListener('click', showResult);
+document.getElementById('closeResultButton').addEventListener('click', () => resultDialog.close());
