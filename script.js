@@ -15,12 +15,18 @@ const ROLES = [
   { id: 'yacht', name: 'ヨット', markClass: 'yacht-icon', section: 'lower' }
 ];
 
+// 修正内容：ダイス選択式点数計算機能で使う役ごとの得点定義
+const UPPER_FACE_VALUES = { aces: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
+const FIXED_SCORES = { smallstraight: 15, bigstraight: 30, yacht: 50 };
+
 const state = {
   playerCount: 2,
   playerNames: ['P1', 'P2', 'P3', 'P4'],
   scores: {},
   currentRole: 0,
-  currentPlayer: 0
+  currentPlayer: 0,
+  inputMode: 'direct',
+  selectedDice: []
 };
 
 const scoreBoard = document.getElementById('scoreBoard');
@@ -32,6 +38,9 @@ const settingsDialog = document.getElementById('settingsDialog');
 const settingsNames = document.getElementById('settingsNames');
 const judgeButton = document.getElementById('judgeButton');
 const resultDialog = document.getElementById('resultDialog');
+const directInputModeButton = document.getElementById('directInputModeButton');
+const diceInputModeButton = document.getElementById('diceInputModeButton');
+const diceCalculator = document.getElementById('diceCalculator');
 // 修正内容：スコア入力はポップアップを使わず、表のセル内inputへ直接入力する
 
 function initScores() {
@@ -67,6 +76,178 @@ function total(playerIndex) {
   return upperSubtotal(playerIndex) + lowerSubtotal(playerIndex) + bonus(playerIndex);
 }
 
+// 修正内容：ダイス選択式点数計算機能の選択・計算・確定処理
+function activeRole() {
+  return ROLES[state.currentRole] || ROLES[0];
+}
+
+function activeScoreIsFilled() {
+  const role = activeRole();
+  return state.scores[state.currentPlayer][role.id] !== null;
+}
+
+function isValidDie(value) {
+  return Number.isInteger(value) && value >= 1 && value <= 6;
+}
+
+function clearDice(shouldRender = true) {
+  state.selectedDice = [];
+  if (shouldRender) renderDiceCalculator();
+}
+
+function addDie(value) {
+  if (!isValidDie(value) || state.selectedDice.length >= 5 || activeScoreIsFilled()) return;
+  state.selectedDice.push(value);
+  renderDiceCalculator();
+}
+
+function removeDie(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= state.selectedDice.length) return;
+  state.selectedDice.splice(index, 1);
+  renderDiceCalculator();
+}
+
+function diceTotal(dice = state.selectedDice) {
+  return dice.reduce((sum, value) => sum + (isValidDie(value) ? value : 0), 0);
+}
+
+function faceCounts(dice = state.selectedDice) {
+  const counts = [0, 0, 0, 0, 0, 0];
+  dice.forEach(value => {
+    if (isValidDie(value)) counts[value - 1] += 1;
+  });
+  return counts;
+}
+
+function calculateScore(role = activeRole(), dice = state.selectedDice) {
+  const validDice = dice.filter(isValidDie);
+  const totalValue = diceTotal(validDice);
+
+  if (UPPER_FACE_VALUES[role.id]) {
+    const face = UPPER_FACE_VALUES[role.id];
+    return validDice.filter(value => value === face).reduce((sum, value) => sum + value, 0);
+  }
+  if (role.id === 'choice') return totalValue;
+
+  const counts = faceCounts(validDice);
+  if (role.id === 'fourcard') {
+    return validDice.length === 5 && counts.some(count => count >= 4) ? totalValue : 0;
+  }
+  if (role.id === 'fullhouse') {
+    const sortedCounts = counts.filter(Boolean).sort((a, b) => a - b);
+    return validDice.length === 5 && sortedCounts.length === 2 && sortedCounts[0] === 2 && sortedCounts[1] === 3 ? totalValue : 0;
+  }
+  return FIXED_SCORES[role.id] || 0;
+}
+
+function dieFaceHtml(value) {
+  const face = isValidDie(value) ? value : 1;
+  return `<span class="die-face face-${face}" aria-hidden="true"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></span>`;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+}
+
+function updateInputStatus() {
+  const role = activeRole();
+  inputStatus.textContent = state.inputMode === 'dice' ? `${role.name}をダイス計算で入力中` : `${role.name}を入力中`;
+}
+
+function setInputMode(mode) {
+  if (!['direct', 'dice'].includes(mode)) return;
+  state.inputMode = mode;
+  clearDice(false);
+  directInputModeButton.classList.toggle('active', mode === 'direct');
+  diceInputModeButton.classList.toggle('active', mode === 'dice');
+  directInputModeButton.setAttribute('aria-pressed', String(mode === 'direct'));
+  diceInputModeButton.setAttribute('aria-pressed', String(mode === 'dice'));
+  renderBoard();
+}
+
+function confirmCalculatedScore(score) {
+  const role = activeRole();
+  if (state.inputMode !== 'dice' || activeScoreIsFilled() || !Number.isInteger(score) || score < 0 || score > 999) return;
+  state.scores[state.currentPlayer][role.id] = score;
+  clearDice(false);
+  moveNext();
+  renderBoard();
+}
+
+function confirmDiceScore() {
+  const role = activeRole();
+  const score = calculateScore(role);
+  if (state.selectedDice.length !== 5 || score <= 0) return;
+  confirmCalculatedScore(score);
+}
+
+function confirmZeroScore() {
+  confirmCalculatedScore(0);
+}
+
+function renderDiceCalculator() {
+  if (state.inputMode !== 'dice') {
+    diceCalculator.hidden = true;
+    diceCalculator.innerHTML = '';
+    return;
+  }
+
+  const role = activeRole();
+  const playerName = escapeHtml(state.playerNames[state.currentPlayer] || `P${state.currentPlayer + 1}`);
+  diceCalculator.hidden = false;
+
+  if (activeScoreIsFilled()) {
+    diceCalculator.innerHTML = `<p class="calculator-locked">${playerName} の「${role.name}」は入力済みです。空欄のスコアを選択してください。</p>`;
+    return;
+  }
+
+  const fixedScore = FIXED_SCORES[role.id];
+  if (fixedScore) {
+    diceCalculator.innerHTML = `
+      <div class="calculator-header"><h2>ダイス計算</h2><span class="dice-count">固定得点</span></div>
+      <p class="calculator-target">${playerName} ／ ${role.name}</p>
+      <div class="calculator-score"><p class="calculator-total">今回の得点</p><p class="calculator-result">${fixedScore}点</p><p class="calculator-status">${role.name}は固定得点です。</p></div>
+      <div class="fixed-score-options">
+        <button class="fixed-score-confirm" type="button" data-fixed-score="${fixedScore}">${fixedScore}点を入力</button>
+        <button class="fixed-score-zero" type="button" data-zero-score>0点として入力</button>
+      </div>`;
+    diceCalculator.querySelector('[data-fixed-score]').addEventListener('click', event => confirmCalculatedScore(Number(event.currentTarget.dataset.fixedScore)));
+    diceCalculator.querySelector('[data-zero-score]').addEventListener('click', confirmZeroScore);
+    return;
+  }
+
+  const totalValue = diceTotal();
+  const score = calculateScore(role);
+  const canConfirm = state.selectedDice.length === 5 && score > 0;
+  // 修正内容：ダイス選択式点数計算機能の表示をコンパクトに整理
+  const selectedDiceHtml = Array.from({ length: 5 }, (_, index) => {
+    const value = state.selectedDice[index];
+    return isValidDie(value)
+      ? `<button class="selected-die-button" type="button" data-selected-die="${index}" aria-label="${value}のダイスを削除">${dieFaceHtml(value)}</button>`
+      : '<span class="selected-die-placeholder" aria-hidden="true"></span>';
+  }).join('');
+  const choicesHtml = [1, 2, 3, 4, 5, 6].map(value => `<button class="die-choice-button" type="button" data-die-value="${value}" aria-label="${value}のダイスを追加"${state.selectedDice.length >= 5 ? ' disabled' : ''}>${dieFaceHtml(value)}</button>`).join('');
+  const scoreSummary = state.selectedDice.length === 0
+    ? ''
+    : `<p class="calculator-summary">合計 <strong>${totalValue}点</strong>${state.selectedDice.length === 5 && score > 0 ? `　得点 <strong>${score}点</strong>` : ''}</p>`;
+
+  diceCalculator.innerHTML = `
+    <div class="calculator-header"><h2>ダイス計算</h2><span class="dice-count">${state.selectedDice.length} / 5</span></div>
+    <p class="calculator-target">${playerName} ／ ${role.name}</p>
+    <div class="selected-dice-list" aria-label="選択したダイス">${selectedDiceHtml}</div>
+    <div class="dice-choice-grid" aria-label="追加するダイス">${choicesHtml}</div>
+    ${scoreSummary}
+    <div class="calculator-actions">
+      <button class="calculator-confirm-button" type="button" data-confirm-dice${canConfirm ? '' : ' disabled'}>この点数を入力</button>
+      <button class="calculator-zero-button" type="button" data-zero-score>0点として入力</button>
+    </div>`;
+
+  diceCalculator.querySelectorAll('[data-selected-die]').forEach(button => button.addEventListener('click', event => removeDie(Number(event.currentTarget.dataset.selectedDie))));
+  diceCalculator.querySelectorAll('[data-die-value]').forEach(button => button.addEventListener('click', event => addDie(Number(event.currentTarget.dataset.dieValue))));
+  diceCalculator.querySelector('[data-confirm-dice]').addEventListener('click', confirmDiceScore);
+  diceCalculator.querySelector('[data-zero-score]').addEventListener('click', confirmZeroScore);
+}
+
 // 修正内容：現在選択中の人数について、全プレイヤーの全役が入力済みか判定
 function isAllScoresFilled() {
   for (let p = 0; p < state.playerCount; p++) {
@@ -97,7 +278,7 @@ function renderNames() {
 
 function renderBoard() {
   turnTitle.textContent = `ターン ${getTurn()} / 12`;
-  inputStatus.textContent = `${ROLES[state.currentRole].name}を入力中`;
+  updateInputStatus();
   renderNames();
 
   const grid = document.createElement('div');
@@ -121,14 +302,16 @@ function renderBoard() {
       const input = document.createElement('input');
       input.className = 'score-input';
       input.type = 'number';
-      input.inputMode = 'numeric';
+      input.inputMode = state.inputMode === 'dice' ? 'none' : 'numeric';
       input.min = '0';
       input.max = '999';
+      input.readOnly = state.inputMode === 'dice';
       input.value = score === null ? '' : String(score);
       input.dataset.player = p;
       input.dataset.role = roleIndex;
       input.setAttribute('aria-label', `${state.playerNames[p]} ${role.name}`);
       input.addEventListener('focus', selectCell);
+      if (state.inputMode === 'dice') input.addEventListener('click', selectCell);
       input.addEventListener('change', saveCellScore);
       input.addEventListener('keydown', handleScoreKey);
       scoreCell.appendChild(input);
@@ -149,20 +332,29 @@ function renderBoard() {
   scoreBoard.innerHTML = '';
   scoreBoard.appendChild(grid);
   judgeButton.hidden = !isAllScoresFilled();
+  renderDiceCalculator();
 }
 
 
 function selectCell(event) {
   const player = Number(event.currentTarget.dataset.player);
   const roleIndex = Number(event.currentTarget.dataset.role);
+  const targetChanged = state.currentPlayer !== player || state.currentRole !== roleIndex;
   state.currentPlayer = player;
   state.currentRole = roleIndex;
-  document.querySelectorAll('.score').forEach(cell => cell.classList.remove('active'));
+  document.querySelectorAll('.score').forEach(cell => {
+    cell.classList.remove('active');
+    const input = cell.querySelector('.score-input');
+    cell.classList.toggle('current-player', input && Number(input.dataset.player) === player);
+  });
   event.currentTarget.closest('.score').classList.add('active');
-  inputStatus.textContent = `${ROLES[state.currentRole].name}を入力中`;
+  if (state.inputMode === 'dice' && targetChanged) clearDice(false);
+  updateInputStatus();
+  if (state.inputMode === 'dice') renderDiceCalculator();
 }
 
 function saveCellScore(event) {
+  if (state.inputMode !== 'direct') return;
   const input = event.currentTarget;
   const player = Number(input.dataset.player);
   const roleIndex = Number(input.dataset.role);
@@ -214,6 +406,7 @@ function movePrevRole() {
     state.currentRole -= 1;
     state.currentPlayer = 0;
   }
+  clearDice(false);
   renderBoard();
 }
 
@@ -222,6 +415,7 @@ function moveNextRole() {
     state.currentRole += 1;
     state.currentPlayer = 0;
   }
+  clearDice(false);
   renderBoard();
 }
 
@@ -229,6 +423,7 @@ function setPlayerCount(count) {
   if (![2,3,4].includes(count)) return;
   state.playerCount = count;
   state.currentPlayer = Math.min(state.currentPlayer, count - 1);
+  clearDice(false);
   document.querySelectorAll('#modeTabs button').forEach(button => {
     button.classList.toggle('active', Number(button.dataset.count) === count);
   });
@@ -266,6 +461,7 @@ function resetGame() {
   initScores();
   state.currentRole = 0;
   state.currentPlayer = 0;
+  clearDice(false);
   settingsDialog.close();
   renderBoard();
 }
@@ -283,6 +479,9 @@ modeTabs.addEventListener('click', event => {
   const button = event.target.closest('button[data-count]');
   if (button) setPlayerCount(Number(button.dataset.count));
 });
+// 修正内容：ダイス選択式点数計算機能の入力方式切り替え
+directInputModeButton.addEventListener('click', () => setInputMode('direct'));
+diceInputModeButton.addEventListener('click', () => setInputMode('dice'));
 document.getElementById('menuButton').addEventListener('click', () => modeTabs.classList.toggle('open'));
 document.getElementById('settingsButton').addEventListener('click', openSettings);
 document.getElementById('saveSettingsButton').addEventListener('click', saveSettings);
@@ -292,3 +491,4 @@ document.getElementById('nextRoleButton').addEventListener('click', moveNextRole
 
 document.getElementById('judgeButton').addEventListener('click', showResult);
 document.getElementById('closeResultButton').addEventListener('click', () => resultDialog.close());
+
