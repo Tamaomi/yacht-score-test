@@ -1,5 +1,5 @@
-// 修正内容：更新後のファイルを確実に読み込むためキャッシュ名を更新
-const CACHE_NAME = 'v3-yacht-score-pwa-win-result'; // 修正内容：黒い四角ブロックアイコン版を確実に読み込むためキャッシュ名を変更
+// 修正内容：ダイス選択式点数計算機能のコンパクトな画面をオフラインでも確実に読み込むためキャッシュ名を更新
+const CACHE_NAME = 'v5-yacht-score-pwa-compact-dice-calculator';
 const FILES = [
   './',
   './index.html',
@@ -26,3 +26,4 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
 });
+
