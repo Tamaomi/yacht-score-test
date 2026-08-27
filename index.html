@@ -31,6 +31,15 @@
         <section class="name-row" id="nameRow" aria-label="プレイヤー名"></section>
         <section id="scoreBoard" class="score-board" aria-label="ヨット点数表"></section>
 
+        <!-- 修正内容：ダイス選択式点数計算機能の入力方式切り替えと計算エリア -->
+        <section class="input-method-area" aria-label="点数入力方式">
+          <div class="input-method-tabs" role="group" aria-label="点数入力方式を選択">
+            <button id="directInputModeButton" class="input-method-button active" type="button" aria-pressed="true">直接入力</button>
+            <button id="diceInputModeButton" class="input-method-button" type="button" aria-pressed="false">ダイス計算</button>
+          </div>
+        </section>
+        <section id="diceCalculator" class="dice-calculator" aria-live="polite" hidden></section>
+
         <section class="progress-area">
           <button id="prevRoleButton" class="nav-button" type="button">◀ 前の役へ</button>
           <p id="inputStatus">エースを入力中</p>
@@ -71,3 +80,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
