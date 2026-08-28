@@ -1,5 +1,5 @@
-// 修正内容：ダイス選択式点数計算機能の上部得点表示をオフラインでも確実に読み込むためキャッシュ名を更新
-const CACHE_NAME = 'v7-yacht-score-pwa-top-score-display';
+// 修正内容：ダイス選択式点数計算機能の上段役早期入力をオフラインでも確実に読み込むためキャッシュ名を更新
+const CACHE_NAME = 'v8-yacht-score-pwa-upper-role-quick-input';
 const FILES = [
   './',
   './index.html',
