@@ -151,6 +151,8 @@ function escapeHtml(value) {
 function setInputMode(mode) {
   if (!['direct', 'dice'].includes(mode)) return;
   state.inputMode = mode;
+  // 修正内容：ダイス選択式点数計算機能で下段役までスクロール選択できるように調整
+  document.body.classList.toggle('dice-input-mode', mode === 'dice');
   clearDice(false);
   directInputModeButton.classList.toggle('active', mode === 'direct');
   diceInputModeButton.classList.toggle('active', mode === 'dice');
