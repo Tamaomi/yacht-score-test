@@ -1,5 +1,6 @@
-// 修正内容：ダイス選択式点数計算機能の操作エリア整理をオフラインでも確実に読み込むためキャッシュ名を更新
-const CACHE_NAME = 'v9-yacht-score-pwa-clean-controls';
+
+// 修正内容：ダイス選択式点数計算機能で下段役までスクロール選択できるようにキャッシュ名を更新
+const CACHE_NAME = 'v10-yacht-score-pwa-dice-scroll-space';
 const FILES = [
   './',
   './index.html',
