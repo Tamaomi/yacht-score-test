@@ -1,5 +1,5 @@
-// 修正内容：ダイス選択式点数計算機能の上段役早期入力をオフラインでも確実に読み込むためキャッシュ名を更新
-const CACHE_NAME = 'v8-yacht-score-pwa-upper-role-quick-input';
+// 修正内容：ダイス選択式点数計算機能の操作エリア整理をオフラインでも確実に読み込むためキャッシュ名を更新
+const CACHE_NAME = 'v9-yacht-score-pwa-clean-controls';
 const FILES = [
   './',
   './index.html',
