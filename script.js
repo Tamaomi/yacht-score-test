@@ -227,16 +227,19 @@ function renderDiceCalculator() {
       : '<span class="selected-die-placeholder" aria-hidden="true"></span>';
   }).join('');
   const choicesHtml = [1, 2, 3, 4, 5, 6].map(value => `<button class="die-choice-button" type="button" data-die-value="${value}" aria-label="${value}のダイスを追加"${state.selectedDice.length >= 5 ? ' disabled' : ''}>${dieFaceHtml(value)}</button>`).join('');
+  // 修正内容：ダイス選択式点数計算機能の得点をダイス入力エリア上部へ表示
   const scoreSummary = state.selectedDice.length === 0
-    ? ''
-    : `<p class="calculator-summary">合計 <strong>${totalValue}点</strong>${state.selectedDice.length === 5 && score > 0 ? `　得点 <strong>${score}点</strong>` : ''}</p>`;
+    ? '<p class="calculator-summary is-empty" aria-hidden="true">&nbsp;</p>'
+    : `<p class="calculator-summary"><span>合計</span> <strong>${totalValue}点</strong>${state.selectedDice.length === 5 && score > 0 ? ` <span>得点</span> <strong>${score}点</strong>` : ''}</p>`;
 
   diceCalculator.innerHTML = `
-    <div class="calculator-header"><h2>ダイス計算</h2><span class="dice-count">${state.selectedDice.length} / 5</span></div>
-    <p class="calculator-target">${playerName} ／ ${role.name}</p>
+    <div class="calculator-header calculator-score-header">
+      <div class="calculator-title-block"><h2>ダイス計算</h2><p class="calculator-target">${playerName} ／ ${role.name}</p></div>
+      ${scoreSummary}
+      <span class="dice-count">${state.selectedDice.length} / 5</span>
+    </div>
     <div class="selected-dice-list" aria-label="選択したダイス">${selectedDiceHtml}</div>
     <div class="dice-choice-grid" aria-label="追加するダイス">${choicesHtml}</div>
-    ${scoreSummary}
     <div class="calculator-actions">
       <button class="calculator-confirm-button" type="button" data-confirm-dice${canConfirm ? '' : ' disabled'}>この点数を入力</button>
       <button class="calculator-zero-button" type="button" data-zero-score>0点として入力</button>
