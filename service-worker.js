@@ -1,5 +1,5 @@
-// 修正内容：ダイス選択式点数計算機能のコンパクトな画面をオフラインでも確実に読み込むためキャッシュ名を更新
-const CACHE_NAME = 'v5-yacht-score-pwa-compact-dice-calculator';
+// 修正内容：ダイス選択式点数計算機能の重ね表示UIをオフラインでも確実に読み込むためキャッシュ名を更新
+const CACHE_NAME = 'v6-yacht-score-pwa-overlay-dice-calculator';
 const FILES = [
   './',
   './index.html',
