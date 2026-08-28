@@ -177,7 +177,9 @@ function confirmCalculatedScore(score) {
 function confirmDiceScore() {
   const role = activeRole();
   const score = calculateScore(role);
-  if (state.selectedDice.length !== 5 || score <= 0) return;
+  // 修正内容：ダイス選択式点数計算機能の上段役は1個から得点を確定できるように調整
+  const requiredDice = UPPER_FACE_VALUES[role.id] ? 1 : 5;
+  if (state.selectedDice.length < requiredDice || score <= 0) return;
   confirmCalculatedScore(score);
 }
 
@@ -218,7 +220,8 @@ function renderDiceCalculator() {
 
   const totalValue = diceTotal();
   const score = calculateScore(role);
-  const canConfirm = state.selectedDice.length === 5 && score > 0;
+  const isUpperRole = Boolean(UPPER_FACE_VALUES[role.id]);
+  const canConfirm = (isUpperRole ? state.selectedDice.length >= 1 : state.selectedDice.length === 5) && score > 0;
   // 修正内容：ダイス選択式点数計算機能の表示をコンパクトに整理
   const selectedDiceHtml = Array.from({ length: 5 }, (_, index) => {
     const value = state.selectedDice[index];
@@ -230,7 +233,9 @@ function renderDiceCalculator() {
   // 修正内容：ダイス選択式点数計算機能の得点をダイス入力エリア上部へ表示
   const scoreSummary = state.selectedDice.length === 0
     ? '<p class="calculator-summary is-empty" aria-hidden="true">&nbsp;</p>'
-    : `<p class="calculator-summary"><span>合計</span> <strong>${totalValue}点</strong>${state.selectedDice.length === 5 && score > 0 ? ` <span>得点</span> <strong>${score}点</strong>` : ''}</p>`;
+    : isUpperRole
+      ? `<p class="calculator-summary"><span>得点</span> <strong>${score}点</strong></p>`
+      : `<p class="calculator-summary"><span>合計</span> <strong>${totalValue}点</strong>${state.selectedDice.length === 5 && score > 0 ? ` <span>得点</span> <strong>${score}点</strong>` : ''}</p>`;
 
   diceCalculator.innerHTML = `
     <div class="calculator-header calculator-score-header">
