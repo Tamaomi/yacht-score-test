@@ -32,7 +32,6 @@ const state = {
 const scoreBoard = document.getElementById('scoreBoard');
 const nameRow = document.getElementById('nameRow');
 const turnTitle = document.getElementById('turnTitle');
-const inputStatus = document.getElementById('inputStatus');
 const modeTabs = document.getElementById('modeTabs');
 const settingsDialog = document.getElementById('settingsDialog');
 const settingsNames = document.getElementById('settingsNames');
@@ -147,11 +146,6 @@ function dieFaceHtml(value) {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
-}
-
-function updateInputStatus() {
-  const role = activeRole();
-  inputStatus.textContent = state.inputMode === 'dice' ? `${role.name}をダイス計算で入力中` : `${role.name}を入力中`;
 }
 
 function setInputMode(mode) {
@@ -286,7 +280,6 @@ function renderNames() {
 
 function renderBoard() {
   turnTitle.textContent = `ターン ${getTurn()} / 12`;
-  updateInputStatus();
   renderNames();
 
   const grid = document.createElement('div');
@@ -357,7 +350,6 @@ function selectCell(event) {
   });
   event.currentTarget.closest('.score').classList.add('active');
   if (state.inputMode === 'dice' && targetChanged) clearDice(false);
-  updateInputStatus();
   if (state.inputMode === 'dice') renderDiceCalculator();
 }
 
@@ -407,24 +399,6 @@ function moveNext() {
     state.currentPlayer = 0;
     state.currentRole += 1;
   }
-}
-
-function movePrevRole() {
-  if (state.currentRole > 0) {
-    state.currentRole -= 1;
-    state.currentPlayer = 0;
-  }
-  clearDice(false);
-  renderBoard();
-}
-
-function moveNextRole() {
-  if (state.currentRole < ROLES.length - 1) {
-    state.currentRole += 1;
-    state.currentPlayer = 0;
-  }
-  clearDice(false);
-  renderBoard();
 }
 
 function setPlayerCount(count) {
@@ -494,8 +468,6 @@ document.getElementById('menuButton').addEventListener('click', () => modeTabs.c
 document.getElementById('settingsButton').addEventListener('click', openSettings);
 document.getElementById('saveSettingsButton').addEventListener('click', saveSettings);
 document.getElementById('resetButton').addEventListener('click', resetGame);
-document.getElementById('prevRoleButton').addEventListener('click', movePrevRole);
-document.getElementById('nextRoleButton').addEventListener('click', moveNextRole);
 
 document.getElementById('judgeButton').addEventListener('click', showResult);
 document.getElementById('closeResultButton').addEventListener('click', () => resultDialog.close());
