@@ -206,7 +206,7 @@ function renderDiceCalculator() {
     diceCalculator.innerHTML = `
       <div class="calculator-header"><h2>ダイス計算</h2><span class="dice-count">固定得点</span></div>
       <p class="calculator-target">${playerName} ／ ${role.name}</p>
-      <div class="calculator-score"><p class="calculator-total">今回の得点</p><p class="calculator-result">${fixedScore}点</p><p class="calculator-status">${role.name}は固定得点です。</p></div>
+      <!-- 修正内容：ダイス選択式点数計算機能の固定役入力を簡潔に表示 -->
       <div class="fixed-score-options">
         <button class="fixed-score-confirm" type="button" data-fixed-score="${fixedScore}">${fixedScore}点を入力</button>
         <button class="fixed-score-zero" type="button" data-zero-score>0点として入力</button>
